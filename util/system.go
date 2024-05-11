@@ -30,6 +30,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
+	"log"
 )
 
 type SystemInfo struct {
@@ -90,8 +91,26 @@ func GetVersionInfo() (*VersionInfo, error) {
 		CommitOffset: -1,
 	}
 
-	_, filename, _, _ := runtime.Caller(0)
-	rootPath := path.Dir(path.Dir(filename))
+	// log.Fatalf("::VERSION:: submodule: %s, version: %s, commit: %s", os.Getenv("IS_GIT_SUBMODULE"), os.Getenv("GIT_VERSION"), os.Getenv("GIT_COMMIT"));
+
+	if os.Getenv("IS_GIT_SUBMODULE") == "true" {
+        log.Println("Detected as a Git submodule, returning hardcoded values.")
+        res.Version = os.Getenv("GIT_VERSION")
+        res.CommitId = os.Getenv("GIT_COMMIT")
+        // Commit offset might not be relevant for submodules
+        res.CommitOffset = 0
+
+        return res, nil
+    }
+
+	rootPath := os.Getenv("GIT_ROOT_PATH")
+	log.Println("::rootPath: ", rootPath)
+
+    if rootPath == "" {
+        _, filename, _, _ := runtime.Caller(0)
+        rootPath = path.Dir(path.Dir(filename))
+    }
+
 	r, err := git.PlainOpen(rootPath)
 	if err != nil {
 		return res, err

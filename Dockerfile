@@ -8,6 +8,18 @@ FROM golang:1.20.12 AS BACK
 WORKDIR /go/src/casdoor
 COPY . .
 RUN ./build.sh
+# Define arguments for Git version info
+ARG GIT_VERSION
+ARG GIT_COMMIT
+ARG IS_GIT_SUBMODULE
+
+# Environment variables accessible at runtime
+ENV IS_GIT_SUBMODULE=${IS_GIT_SUBMODULE}
+ENV GIT_VERSION=${GIT_VERSION}
+ENV GIT_COMMIT=${GIT_COMMIT}
+
+RUN ls -al /go/src/casdoor/.git
+RUN go test -v -run TestGetVersionInfo ./util/system_test.go ./util/system.go
 RUN go test -v -run TestGetVersionInfo ./util/system_test.go ./util/system.go > version_info.txt
 
 FROM alpine:latest AS STANDARD
